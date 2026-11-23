@@ -14,7 +14,7 @@ const DEFAULT = () => ({
   done: {},            // { lessonId: { score, date } }
   convs: {},           // { convId: date }
   srs: {},             // { id: { ru, fr, due, int, ef, rep } }
-  settings: { minutes: 30, start: today(), translit: true, rate: 0.85, theme: "auto", intro: true, voice: "", speak: true }
+  settings: { minutes: 30, start: today(), translit: true, rate: 0.85, theme: "auto", intro: true, voice: "", speak: true, mat: false }
 });
 
 // ── Validation stricte des données (localStorage ou fichier importé) ──
@@ -40,7 +40,7 @@ export function sanitize(raw) {
     settings: {
       minutes: [15, 30, 45, 60, 90, 120].includes(s.minutes) ? s.minutes : d.settings.minutes,
       start: date(s.start, d.settings.start),
-      translit: bool(s.translit, true), speak: bool(s.speak, true), intro: bool(s.intro, true),
+      translit: bool(s.translit, true), speak: bool(s.speak, true), intro: bool(s.intro, true), mat: bool(s.mat, false),
       rate: num(s.rate, 0.5, 1.2, 0.85),
       theme: ["auto", "dark", "light"].includes(s.theme) ? s.theme : "auto",
       voice: str(s.voice, 120)

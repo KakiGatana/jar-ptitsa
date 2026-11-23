@@ -44,5 +44,56 @@ export const PHRASES = [
     ["Помогите!","Au secours !"],["Вызовите скорую!","Appelez une ambulance !"],["Мне плохо","Je me sens mal"],
     ["Где больница?","Où est l’hôpital ?"],["Я потерял(а) паспорт","J’ai perdu mon passeport"],
     ["Позвоните в полицию","Appelez la police"],["У меня аллергия на…","Je suis allergique à…"],["112","Numéro d’urgence unique en Russie"]
+  ]},
+  { id: "courant", title: "Expressions du quotidien", icon: "☕", items: [
+    ["Ну давай!","Allez ! / Bon, salut !","Sert à encourager ou à finir une conversation."],
+    ["Да ладно!","Sans blague ! / Allez, arrête !"],["Без разницы","Peu importe"],["Как хочешь","Comme tu veux"],
+    ["Как скажешь","Si tu le dis, comme tu veux"],["Посмотрим","On verra"],["Не за что","De rien"],
+    ["Ничего страшного","C’est rien, pas grave"],["Мне пора","Je dois y aller"],["Я сейчас!","J’arrive tout de suite !"],
+    ["Секундочку!","Une petite seconde !"],["Будь здоров! / Будьте здоровы!","À tes / vos souhaits !","Après un éternuement."],
+    ["На здоровье!","Je t’en prie (après un merci pour un repas)","Ce n’est PAS un toast : on trinque avec « За здоровье! »."],
+    ["С лёгким паром!","Bon bain ! (après la douche ou le sauna)","Aussi le titre du film culte du Nouvel An."],
+    ["Счастливо!","Bonne continuation !"],["Удачи!","Bonne chance !"],
+    ["Ну ты даёшь!","T’es incroyable ! (admiratif ou reproche)"],["Наконец-то!","Enfin !"],["Слава богу!","Dieu merci !"],
+    ["Я в шоке","J’hallucine, je suis choqué(e)"],["Не вопрос!","Pas de souci !"],["Так и быть","Bon, d’accord (à contrecœur)"],
+    ["Садись, в ногах правды нет","Assieds-toi, on n’est pas bien debout","Proverbe pour inviter à s’asseoir."],
+    ["Это не моё","Ce n’est pas mon truc"],["Ну и ну!","Eh bien, ça alors !"],["Всё путём","Tout roule"],
+    ["Будем на связи","On reste en contact"],["Чем богаты, тем и рады","C’est sans façon (en servant à manger)","Formule modeste de l’hôte."]
+  ]},
+  { id: "argot", title: "Familier et argot", icon: "✌", items: [
+    ["Тачка","Caisse, bagnole"],["Бабки","Fric, thunes"],["Прикол / прикольно","Truc marrant / cool, marrant"],
+    ["Тусоваться / тусовка","Traîner, faire la fête / soirée, milieu"],["Клёво","Cool, chouette","Un peu daté mais compris de tous."],
+    ["Офигеть! / Обалдеть!","Dingue ! / Waouh !","Versions acceptables d’un juron."],["Фигня","Connerie, truc sans importance"],
+    ["Ты меня достал(а)!","Tu me saoules !"],["Меня бесит…","…m’énerve, je supporte pas…"],["Чувак","Mec"],
+    ["Тупить / я туплю","Bugger, être lent / je rame"],["Халява","Truc gratuit, à l’œil"],["Кайф / кайфовать","Le pied / kiffer"],
+    ["Забей!","Laisse tomber !"],["Не парься!","Te prends pas la tête !"],["Ржать","Se marrer (litt. hennir)"],
+    ["Днюха","Anniv’"],["Комп, универ, общага","Ordi, fac, résidence étudiante"],["Капец!","C’est la cata !","Euphémisme poli d’un mot vulgaire."],
+    ["Пофиг","Je m’en fiche"],["Блин!","Zut ! / Mince !","Ultra courant. Évite seulement en contexte très formel."],
+    ["Ёлки-палки!","Punaise ! / Nom d’un chien !"],["Короче","Bref, en gros"],["Типа","Genre"]
+  ]},
+  { id: "insultes", title: "Insultes courantes", icon: "☠", items: [
+    ["Дурак / дура","Idiot / idiote","Courant, même affectueux entre proches : « Дурачок! »."],
+    ["Идиот / идиотка","Idiot / idiote"],["Придурок","Crétin, abruti"],
+    ["Козёл","Salaud (litt. bouc)","Insulte forte pour un homme, plus grave qu’en français."],
+    ["Сволочь","Ordure, salaud"],["Свинья","Porc (personne grossière ou sale)"],
+    ["Хам / хамка","Malpoli, rustre","Хамство = comportement grossier."],["Зануда","Rabat-joie, casse-pieds"],
+    ["Лох","Pigeon, loser","Argot méprisant."],["Тупой / тупая","Débile"],["Урод","Monstre, abruti","Blessant."],
+    ["Балбес","Nigaud","Gentil, plutôt affectueux."],["Тормоз","Lent à la détente (litt. frein)"],
+    ["Отвали!","Fous-moi la paix !"],["Заткнись!","Ferme-la !"],["Иди к чёрту!","Va au diable !"]
+  ]},
+  { id: "mat", title: "Мат (vulgaire)", icon: "⚠", gated: true, items: [
+    ["Бля / блядь","Putain (interjection)","Très vulgaire. Euphémisme : блин."],
+    ["Сука","Salope ; « putain » (interjection)","Insulte forte. Euphémisme : зараза."],
+    ["Пиздец","C’est la cata, c’est foutu","Euphémismes : капец, звиздец."],
+    ["Охуеть! / охуенно","Putain c’est dingue ! / Génial à mort","Euphémismes : офигеть, обалдеть / офигенно."],
+    ["Похуй","J’en ai rien à foutre","Euphémismes : пофиг, по барабану."],
+    ["Иди нахуй!","Va te faire foutre !","Très grave. Euphémismes : иди нафиг, иди к чёрту."],
+    ["Заебал(а)!","Tu me fais chier !","Euphémismes : задолбал(а), достал(а)."],
+    ["Хуйня","Connerie, truc nul","Euphémismes : фигня, ерунда."],
+    ["Пиздеть","Raconter des conneries, mentir","Euphémismes : врать, болтать."],
+    ["Ни хуя себе!","Putain, ça alors !","Euphémismes : ни фига себе, ничего себе."],
+    ["Ёб твою мать!","Nom de Dieu ! (juron visant la mère)","Euphémismes : ёлки-палки, ёшкин кот."],
+    ["Мудак","Connard","Insulte forte."],["Долбоёб","Abruti fini","Très insultant."],
+    ["Хуй","Bite","Base de nombreux mots. Euphémismes : хрен, фиг."]
   ]}
 ];

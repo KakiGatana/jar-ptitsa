@@ -2,12 +2,12 @@
 // Sur GitHub Pages, toutes les applis d’un compte partagent la même origine (kakigatana.github.io)
 // et donc le même stockage de caches : on ne touche qu’aux caches préfixés « jar-ptitsa- ».
 const PREFIX = "jar-ptitsa-";
-const CACHE = PREFIX + "v2";
+const CACHE = PREFIX + "v3";
 const FONT_HOSTS = ["https://fonts.googleapis.com", "https://fonts.gstatic.com"];
 const FILES = [
   "./", "index.html", "css/style.css", "manifest.webmanifest", "icons/icon.svg", "icons/maskable.svg",
   "js/app.js", "js/util.js", "js/store.js", "js/quiz.js", "js/logo.js",
-  "js/data/curriculum.js", "js/data/alphabet.js", "js/data/lessons-a.js", "js/data/lessons-b.js",
+  "js/data/curriculum.js", "js/data/alphabet.js", "js/data/lessons-a.js", "js/data/lessons-b.js", "js/data/lessons-c.js", "js/data/culture.js",
   "js/data/grammar.js", "js/data/conversations.js", "js/data/phrases.js"
 ];
 

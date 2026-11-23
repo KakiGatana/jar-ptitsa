@@ -9,8 +9,13 @@ import { ALPHABET, GROUPS } from "./data/alphabet.js";
 import { GRAMMAR } from "./data/grammar.js";
 import { CONVERSATIONS } from "./data/conversations.js";
 import { PHRASES } from "./data/phrases.js";
+import { LESSONS_B2, LESSONS_C1 } from "./data/lessons-c.js";
+import { CULTURE } from "./data/culture.js";
 
-const LESSONS = [...LESSONS_A, ...LESSONS_B];
+// Leçons triées par niveau (l’ordre des fichiers ne compte pas).
+const LV_ORDER = LEVELS.map((l) => l.id);
+const LESSONS = [...LESSONS_A, ...LESSONS_B, ...LESSONS_B2, ...LESSONS_C1]
+  .map((l, i) => [l, i]).sort((a, b) => LV_ORDER.indexOf(a[0].level) - LV_ORDER.indexOf(b[0].level) || a[1] - b[1]).map(([l]) => l);
 const byId = Object.fromEntries(LESSONS.map((l) => [l.id, l]));
 const ALL_VOCAB = LESSONS.flatMap((l) => l.vocab);
 const view = $("#view");
@@ -26,13 +31,14 @@ const I = {
   map: '<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 4v14M15 6v14" stroke="currentColor" stroke-width="2"/>',
   user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6z"/>',
   abc: '<text x="12" y="17" text-anchor="middle" font-size="15" font-weight="700" font-family="serif">Ж</text>',
+  star: '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>',
   flame: '<path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-3-1-6 1-9z"/>'
 };
 const icon = (n) => `<svg class="ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${I[n]}</svg>`;
 
 const NAV = [
   ["", "Accueil", "home"], ["parcours", "Parcours", "path"], ["revision", "Réviser", "cards"],
-  ["pratique", "Pratiquer", "chat"], ["grammaire", "Guides", "book"], ["alphabet", "Alphabet", "abc"],
+  ["pratique", "Pratiquer", "chat"], ["culture", "Usages", "star"], ["grammaire", "Guides", "book"], ["alphabet", "Alphabet", "abc"],
   ["programme", "Programme", "map"], ["profil", "Profil", "user"]
 ];
 
@@ -69,7 +75,7 @@ document.addEventListener("click", (e) => {
 // ───────────────────────── Routeur ─────────────────────────
 const routes = [
   [/^$/, home], [/^parcours$/, parcours], [/^lecon\/(.+)$/, lesson], [/^revision$/, review],
-  [/^pratique$/, practice], [/^conversation\/(.+)$/, conversation], [/^phrases$/, phrases],
+  [/^pratique$/, practice], [/^conversation\/(.+)$/, conversation], [/^phrases(?:\/([a-z]+))?$/, phrases], [/^culture(?:\/([a-z-]+))?$/, culture],
   [/^grammaire$/, grammarList], [/^grammaire\/(.+)$/, grammarArticle], [/^alphabet$/, alphabet],
   [/^programme$/, programme], [/^profil$/, profile]
 ];
@@ -148,6 +154,8 @@ function home() {
     <p class="eyebrow">Le mot du jour</p>
     <div class="wod-row"><div><p class="ru display-sm">${acc(wod[0])}</p>${tl(wod[0])}<p>${esc(wod[1])}</p></div>${sayBtn(wod[0], "lg")}</div>
   </section>
+
+  ${(() => { const c = CULTURE[seed % CULTURE.length]; return `<a class="card next cu-home" href="#/culture/${c.id}"><div><p class="eyebrow">Usage du jour</p><h3>${c.icon} ${esc(c.title)}</h3><p class="muted">${esc(c.lead)}</p></div><span class="btn ghost">Lire →</span></a>`; })()}
 
   ${ornament}
   <section>
@@ -287,7 +295,7 @@ function review() {
 }
 
 // ───────────────────────── Pratique ─────────────────────────
-const practiceTabs = (on) => `<div class="tabs-h"><a href="#/pratique" class="${on === "c" ? "on" : ""}">Conversations</a><a href="#/phrases" class="${on === "p" ? "on" : ""}">Guide de phrases</a></div>`;
+const practiceTabs = (on) => `<div class="tabs-h"><a href="#/pratique" class="${on === "c" ? "on" : ""}">Conversations</a><a href="#/phrases" class="${on === "p" ? "on" : ""}">Phrases</a><a href="#/culture" class="${on === "u" ? "on" : ""}">Usages</a></div>`;
 const CTX = { proches: ["Proches", "♥"], pro: ["Travail", "◆"], quotidien: ["Quotidien", "☀"] };
 
 function practice() {
@@ -348,26 +356,51 @@ function conversation(id) {
   <div class="conv-wrap card"><div id="chat" class="dlg"></div><div id="choices" class="choices"></div></div>`;
 }
 
-function phrases() {
+function phrases(catArg) {
+  const start = PHRASES.some((c) => c.id === catArg) ? catArg : PHRASES[0].id;
   after(() => {
     const draw = () => {
       const q = $("#pq").value.toLowerCase().trim();
-      const cat = $(".pcat.on")?.dataset.cat || PHRASES[0].id;
-      const list = q ? PHRASES.flatMap((c) => c.items) : PHRASES.find((c) => c.id === cat).items;
+      const cat = $(".pcat.on")?.dataset.cat || start;
+      const C = PHRASES.find((c) => c.id === cat);
+      // Le мат reste masqué tant que l’utilisateur ne l’a pas demandé explicitement.
+      if (!q && C.gated && !S.settings.mat) {
+        $("#plist").innerHTML = `<li class="gate"><div><p><b>Registre vulgaire (мат).</b> Ces mots sont très grossiers en russe, bien plus que leurs équivalents français. Ils sont là pour que tu les <b>comprennes</b> ; chacun est accompagné de son euphémisme, à utiliser à la place.</p>
+          <button class="btn red" data-unlock>J’ai compris, afficher</button></div></li>`;
+        $("[data-unlock]").onclick = () => { S.settings.mat = true; save(); draw(); };
+        return;
+      }
+      const list = q ? PHRASES.filter((c) => !c.gated || S.settings.mat).flatMap((c) => c.items) : C.items;
       const items = list.filter(([ru, fr]) => !q || ru.toLowerCase().includes(q) || fr.toLowerCase().includes(q));
-      $("#plist").innerHTML = items.map(([ru, fr, note]) => `<li data-say="${esc(ru)}"><div><span class="ru vru">${esc(ru)}</span>${tl(ru)}<span class="vfr">${esc(fr)}</span>${note ? `<small class="note">${esc(note)}</small>` : ""}</div>
+      $("#plist").innerHTML = (C.gated && !q ? `<li class="gate small"><span>Registre vulgaire affiché.</span><button class="btn ghost sm" data-lock>Masquer</button></li>` : "") + items.map(([ru, fr, note]) => `<li data-say="${esc(ru)}"><div><span class="ru vru">${esc(ru)}</span>${tl(ru)}<span class="vfr">${esc(fr)}</span>${note ? `<small class="note">${esc(note)}</small>` : ""}</div>
         <div class="row">${sayBtn(ru)}<button class="say add ${hasCard(ru) ? "in" : ""}" data-add="${esc(ru)}" data-fr="${esc(fr)}" aria-label="Ajouter aux révisions">${hasCard(ru) ? "✓" : "+"}</button></div></li>`).join("") || `<li class="muted">Aucun résultat.</li>`;
     };
     $("#pcats").onclick = (e) => { const b = e.target.closest(".pcat"); if (!b) return; $$(".pcat").forEach((x) => x.classList.toggle("on", x === b)); $("#pq").value = ""; draw(); };
     $("#pq").oninput = draw;
-    $("#plist").onclick = (e) => { const b = e.target.closest("[data-add]"); if (!b) return; addCards([[b.dataset.add, b.dataset.fr]]); b.textContent = "✓"; b.classList.add("in"); toast("Ajouté aux révisions"); refreshChrome(); };
+    $("#plist").onclick = (e) => {
+      if (e.target.closest("[data-lock]")) { S.settings.mat = false; save(); return draw(); }
+      const b = e.target.closest("[data-add]"); if (!b) return; addCards([[b.dataset.add, b.dataset.fr]]); b.textContent = "✓"; b.classList.add("in"); toast("Ajouté aux révisions"); refreshChrome(); };
     draw();
   });
   return `<header class="page-h"><p class="eyebrow">Pratiquer</p><h1>Guide de phrases</h1><p class="muted">Les phrases qui servent vraiment, à écouter et à ajouter à tes révisions.</p></header>
   ${practiceTabs("p")}
   <input id="pq" class="search" placeholder="Rechercher en français ou en russe…">
-  <div id="pcats" class="pcats">${PHRASES.map((c, i) => `<button class="pcat ${i ? "" : "on"}" data-cat="${c.id}">${c.icon} ${esc(c.title)}</button>`).join("")}</div>
+  <div id="pcats" class="pcats">${PHRASES.map((c) => `<button class="pcat ${c.id === start ? "on" : ""} ${c.gated ? "gated" : ""}" data-cat="${c.id}">${c.icon} ${esc(c.title)}</button>`).join("")}</div>
   <ul id="plist" class="vocab card"></ul>`;
+}
+
+// ───────────────────────── Usages et culture ─────────────────────────
+function culture(id) {
+  after(() => {
+    const open = id && document.getElementById("cu-" + id);
+    if (open) { open.open = true; setTimeout(() => open.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }
+  });
+  return `<header class="page-h"><p class="eyebrow">Usages et culture</p><h1>Parler comme un natif</h1><p class="muted">Ce que les manuels ne disent pas : tutoiement, politesse, rituels, superstitions, réactions, gros mots. C’est ce qui fait la différence entre un russe « de livre » et un russe vivant.</p></header>
+  ${practiceTabs("u")}
+  <div class="culture">${CULTURE.map((c) => `<details class="card cu" id="cu-${c.id}">
+    <summary><span class="cu-ic">${c.icon}</span><span><h3>${esc(c.title)} <span class="ru">${esc(c.ru)}</span></h3><small class="muted">${esc(c.lead)}</small></span></summary>
+    <div class="article">${c.html}${c.id === "mat" ? `<p><a class="btn ghost" href="#/phrases/mat">Voir la liste et les euphémismes →</a></p>` : ""}</div></details>`).join("")}</div>
+  <div class="card tip"><h3>Pour aller plus loin</h3><p>Le guide de phrases contient aussi les <a href="#/phrases/courant">expressions du quotidien</a>, le <a href="#/phrases/argot">familier et l’argot</a> et les <a href="#/phrases/insultes">insultes courantes</a>. La leçon B2 <a href="#/lecon/b2-06">« Les petits mots qui changent tout »</a> t’apprend les particules qui rendent ton russe naturel.</p></div>`;
 }
 
 // ───────────────────────── Guides de grammaire ─────────────────────────

@@ -109,6 +109,35 @@ export const CONVERSATIONS = [
     }
   },
   {
+    id: "amis", ctx: "proches", level: "B1", title: "Soirée entre amis", ru: "В гостях у друга",
+    who: "Друг Миша", intro: "Ton ami Micha t’invite chez lui. Entre amis : tutoiement, familier, et les codes de l’invité.",
+    nodes: {
+      start: { npc: ["Здорово! Заходи, раздевайся. Тапки вон там.", "Salut ! Entre, enlève ta veste. Les chaussons sont là-bas."], choices: [
+        { ru: "Привет! Держи, я торт принёс.", fr: "Salut ! Tiens, j’ai apporté un gâteau.", next: "gift" },
+        { ru: "Здравствуйте, Михаил. Благодарю за приглашение.", fr: "Bonjour, Mikhaïl. Je vous remercie de l’invitation.", ok: false, tip: "Beaucoup trop formel avec un ami : tu lui parles comme à l’administration. Entre amis : Привет + ты." },
+        { ru: "Привет! А разуваться обязательно?", fr: "Salut ! Je suis obligé d’enlever mes chaussures ?", ok: false, tip: "En Russie, on enlève toujours ses chaussures chez quelqu’un. Le demander paraît bizarre." }
+      ]},
+      gift: { npc: ["О, круто! Не стоило. Пиво будешь или чай?", "Oh, génial ! Fallait pas. Tu prends une bière ou un thé ?"], choices: [
+        { ru: "Давай пиво, спасибо.", fr: "Une bière, merci.", next: "toast" },
+        { ru: "Мне чаю, я за рулём.", fr: "Un thé pour moi, je conduis.", next: "toast" }
+      ]},
+      toast: { npc: ["Ну, ребята, давайте выпьем! За встречу!", "Bon les amis, on trinque ! À nos retrouvailles !"], choices: [
+        { ru: "За встречу! Как же я рад вас видеть!", fr: "À nos retrouvailles ! Qu’est-ce que je suis content de vous voir !", next: "joke" },
+        { ru: "На здоровье!", fr: "(croyant porter un toast)", ok: false, tip: "« На здоровье » répond à un merci pour un repas, ce n’est pas un toast. Reprends la formule : За встречу !" },
+        { ru: "(Ты молча пьёшь.)", fr: "(Tu bois sans rien dire.)", ok: false, tip: "Pendant un toast, on ne boit pas en silence : on répète la formule et on trinque (sauf en mémoire d’un défunt)." }
+      ]},
+      joke: { npc: ["Слушай, ты уже по-русски шпаришь как настоящий русский!", "Dis donc, tu parles russe comme un vrai Russe maintenant !"], choices: [
+        { ru: "Да ладно, скажешь тоже! Ещё учиться и учиться.", fr: "Arrête, n’importe quoi ! J’ai encore tout à apprendre.", next: "leave" },
+        { ru: "Спасибо, я очень стараюсь.", fr: "Merci, je fais beaucoup d’efforts.", next: "leave" }
+      ]},
+      leave: { npc: ["Уже уходишь? Посиди ещё!", "Tu pars déjà ? Reste encore un peu !"], choices: [
+        { ru: "Не, мне пора, завтра рано вставать. Спасибо за вечер!", fr: "Non, je dois y aller, je me lève tôt demain. Merci pour la soirée !", next: "end" },
+        { ru: "Пока.", fr: "Salut.", ok: false, tip: "Partir sans remercier ni t’expliquer paraît froid. Donne une raison et remercie pour la soirée." }
+      ]},
+      end: { npc: ["Давай, напиши, как доберёшься! Пока!", "Allez, écris-moi quand t’es arrivé ! Salut !"], end: true }
+    }
+  },
+  {
     id: "taxi", ctx: "quotidien", level: "A2", title: "En taxi", ru: "В такси",
     who: "Таксист", intro: "Tu prends un taxi depuis la gare jusqu’à ton hôtel.",
     nodes: {
