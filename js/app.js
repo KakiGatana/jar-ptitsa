@@ -1,5 +1,5 @@
 import { $, $$, esc, acc, plain, tr, say, shuffle, pick, toast, sparks, stressify, initVoices, ruVoices, setVoice, canSpeak, hasRuVoice } from "./util.js";
-import { S, save, addXP, addCards, hasCard, dueCards, grade, today, addDays, liveStreak, goal, todayXP, exportData, importData, resetAll } from "./store.js";
+import { S, save, addXP, addCards, hasCard, dueCards, grade, today, addDays, liveStreak, goal, todayXP, exportData, importData, resetAll, MAX_IMPORT_BYTES } from "./store.js";
 import { runQuiz, buildLessonQuiz, ICON_SOUND } from "./quiz.js";
 import { logoSVG } from "./logo.js";
 import { LEVELS, HONEST_NOTE } from "./data/curriculum.js";
@@ -317,7 +317,8 @@ function conversation(id) {
       if (n.end) {
         const xp = 5 + good * 2; S.convs[C.id] = today(); addXP(xp);
         ch.innerHTML = `<div class="card empty"><p class="ru display-sm">Отлично!</p><p>Conversation terminée · ${mistakes ? `${mistakes} maladresse${mistakes > 1 ? "s" : ""} corrigée${mistakes > 1 ? "s" : ""}` : "sans faute"} · +${xp} XP</p>
-          <div class="row center"><a class="btn ghost" href="#/pratique">Autres scénarios</a><button class="btn gold" onclick="location.reload()">Recommencer</button></div></div>`;
+          <div class="row center"><a class="btn ghost" href="#/pratique">Autres scénarios</a><button class="btn gold" data-restart>Recommencer</button></div></div>`;
+        $("[data-restart]", ch).addEventListener("click", route);
         sparks(); return;
       }
       ch.innerHTML = n.choices.map((c, k) => `<button class="choice" data-c="${k}"><span class="ru">${esc(c.ru)}</span><small class="fr">${esc(c.fr)}</small></button>`).join("");
@@ -464,7 +465,13 @@ function profile() {
     $("#ptest").onclick = () => say("Здравствуйте! Меня зовут Жар-птица.");
     $("#preplay").onclick = () => playIntro(true);
     $("#pexp").onclick = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([exportData()], { type: "application/json" })); a.download = `jar-ptitsa-${today()}.json`; a.click(); };
-    $("#pimp").onchange = async (e) => { try { importData(await e.target.files[0].text()); toast("Progression importée"); applyTheme(); route(); } catch (err) { toast("Fichier invalide"); } };
+    $("#pimp").onchange = async (e) => {
+      const f = e.target.files[0]; e.target.value = "";
+      if (!f) return;
+      if (f.size > MAX_IMPORT_BYTES) return toast("Fichier trop gros (5 Mo max)");
+      try { importData(await f.text()); window.__rate = S.settings.rate; setVoice(S.settings.voice); toast("Progression importée"); applyTheme(); route(); }
+      catch (err) { toast("Fichier invalide"); }
+    };
     $("#preset").onclick = () => { if (confirm("Effacer toute ta progression ? Cette action est définitive.")) { resetAll(); applyTheme(); route(); toast("Progression effacée"); } };
   });
   const vs = ruVoices();
