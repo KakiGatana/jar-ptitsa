@@ -10,7 +10,8 @@ export const addDays = (iso, n) => { const d = new Date(iso + "T12:00:00"); d.se
 const DEFAULT = () => ({
   name: "",
   xp: 0, streak: 0, best: 0, lastDay: null,
-  days: {},            // { "2026-11-23": xp }
+  lastBackup: null,    // date du dernier export
+  days: {},          // { "2026-11-23": xp }
   done: {},            // { lessonId: { score, date } }
   convs: {},           // { convId: date }
   srs: {},             // { id: { ru, fr, due, int, ef, rep } }
@@ -35,7 +36,7 @@ export function sanitize(raw) {
   const out = {
     name: str(r.name, 40).replace(/[<>]/g, ""),
     xp: int(r.xp, 0, 1e9, 0), streak: int(r.streak, 0, 1e5, 0), best: int(r.best, 0, 1e5, 0),
-    lastDay: date(r.lastDay),
+    lastDay: date(r.lastDay), lastBackup: date(r.lastBackup),
     days: {}, done: {}, convs: {}, srs: {},
     settings: {
       minutes: [15, 30, 45, 60, 90, 120].includes(s.minutes) ? s.minutes : d.settings.minutes,
@@ -53,7 +54,8 @@ export function sanitize(raw) {
   Object.entries(obj(r.srs)).slice(0, MAX_ENTRIES).forEach(([k, v]) => {
     const c = obj(v), ru = str(c.ru, 200), fr = str(c.fr, 300);
     if (!ru || !fr || k !== ru || !/[а-яё]/i.test(ru)) return; // une carte est toujours du russe
-    srs[k] = { ru, fr, due: date(c.due, d.settings.start), int: int(c.int, 0, 36500, 0), ef: num(c.ef, 1.3, 5, 2.5), rep: int(c.rep, 0, 1e4, 0) };
+    const due = date(c.due, d.settings.start);
+    srs[k] = { ru, fr, due, int: int(c.int, 0, 36500, 0), ef: num(c.ef, 1.3, 5, 2.5), rep: int(c.rep, 0, 1e4, 0), added: date(c.added, due) };
   });
   // On repasse en objets ordinaires (sérialisables) après avoir filtré les clés.
   out.days = { ...days }; out.done = { ...done }; out.convs = { ...convs }; out.srs = { ...srs };
@@ -100,7 +102,7 @@ export function addCards(list) {
   let n = 0;
   for (const [ru, fr] of list) {
     const id = ru;
-    if (!S.srs[id]) { S.srs[id] = { ru, fr, due: today(), int: 0, ef: 2.5, rep: 0 }; n++; }
+    if (!S.srs[id]) { S.srs[id] = { ru, fr, due: today(), int: 0, ef: 2.5, rep: 0, added: today() }; n++; }
   }
   save();
   return n;
@@ -122,15 +124,52 @@ export function grade(id, q) {
   save();
 }
 
-export function exportData() { return JSON.stringify(S, null, 1); }
+// ── Sauvegarde : export, lecture d’un fichier, fusion ou remplacement ──
+export function exportData() {
+  S.lastBackup = today(); save();
+  return JSON.stringify({ app: "jar-ptitsa", exportedAt: new Date().toISOString(), ...S }, null, 1);
+}
 export const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
-export function importData(txt) {
+
+// Lit et valide un fichier sans rien modifier : renvoie les données propres + un résumé pour l’aperçu.
+export function readBackup(txt) {
   if (typeof txt !== "string" || txt.length > MAX_IMPORT_BYTES) throw new Error("Fichier trop gros");
   const d = JSON.parse(txt);
   if (!d || typeof d !== "object" || Array.isArray(d) || !d.settings) throw new Error("Fichier invalide");
   const clean = sanitize(d);
+  const at = typeof d.exportedAt === "string" && /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(d.exportedAt) ? d.exportedAt : null;
+  return { data: clean, exportedAt: at, summary: summarize(clean) };
+}
+export const summarize = (s) => ({ xp: s.xp, lessons: Object.keys(s.done).length, cards: Object.keys(s.srs).length, days: Object.keys(s.days).length, best: s.best });
+
+export function replaceWith(clean) {
   Object.keys(S).forEach((k) => delete S[k]);
   Object.assign(S, clean);
   save();
 }
+
+// Fusion : garde le meilleur des deux (utile pour réunir téléphone et ordinateur).
+export function mergeWith(o) {
+  const later = (a, b) => (!a ? b : !b ? a : a > b ? a : b);
+  const earlier = (a, b) => (!a ? b : !b ? a : a < b ? a : b);
+  for (const [d, v] of Object.entries(o.days)) S.days[d] = Math.max(S.days[d] || 0, v);
+  for (const [id, v] of Object.entries(o.done)) {
+    const c = S.done[id];
+    S.done[id] = c ? { score: Math.max(c.score, v.score), date: earlier(c.date, v.date) } : v;
+  }
+  for (const [id, v] of Object.entries(o.convs)) S.convs[id] = earlier(S.convs[id], v);
+  for (const [id, v] of Object.entries(o.srs)) {
+    const c = S.srs[id];
+    if (!c) S.srs[id] = v;
+    else if (v.rep > c.rep || (v.rep === c.rep && v.due > c.due)) S.srs[id] = { ...v, added: earlier(c.added, v.added) };
+  }
+  S.xp = Math.max(S.xp, o.xp, Object.values(S.days).reduce((a, b) => a + b, 0));
+  if (later(S.lastDay, o.lastDay) === o.lastDay && o.lastDay !== S.lastDay) { S.lastDay = o.lastDay; S.streak = o.streak; }
+  else if (o.lastDay === S.lastDay) S.streak = Math.max(S.streak, o.streak);
+  S.best = Math.max(S.best, o.best, S.streak);
+  if (!S.name) S.name = o.name;
+  save();
+}
+
+export function importData(txt) { replaceWith(readBackup(txt).data); }
 export function resetAll() { Object.keys(S).forEach((k) => delete S[k]); Object.assign(S, DEFAULT()); save(); }

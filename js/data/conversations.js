@@ -138,6 +138,121 @@ export const CONVERSATIONS = [
     }
   },
   {
+    id: "babouchka", ctx: "proches", level: "A2", title: "Appeler sa grand-mère", ru: "Звонок бабушке",
+    who: "Бабушка", intro: "Tu appelles ta grand-mère russe. Elle s’inquiète toujours de savoir si tu manges assez.",
+    nodes: {
+      start: { npc: ["Алло! Кто это?", "Allô ! Qui est-ce ?"], choices: [
+        { ru: "Бабуля, привет! Это я, твой внук!", fr: "Mamie, coucou ! C’est moi, ton petit-fils !", next: "how" },
+        { ru: "Здравствуйте, это ваш внук.", fr: "Bonjour, c’est votre petit-fils.", ok: false, tip: "On ne vouvoie jamais sa grand-mère ! En famille : ты, et un diminutif affectueux comme бабуля." }
+      ]},
+      how: { npc: ["Ой, родной мой! Как ты? Ты хорошо кушаешь?", "Oh, mon chéri ! Comment tu vas ? Tu manges bien ?"], choices: [
+        { ru: "Да, бабуль, всё хорошо. А ты как себя чувствуешь?", fr: "Oui, mamie, tout va bien. Et toi, comment tu te sens ?", next: "health" },
+        { ru: "Да. Пока!", fr: "Oui. Salut !", ok: false, tip: "Raccrocher si vite blesserait ta grand-mère. Prends de ses nouvelles : А ты как себя чувствуешь ?" }
+      ]},
+      health: { npc: ["Да ничего, давление немножко. Когда приедешь?", "Ça va, un peu de tension. Quand viens-tu ?"], choices: [
+        { ru: "Летом обязательно приеду. Береги себя!", fr: "Je viendrai sans faute cet été. Prends soin de toi !", next: "end" },
+        { ru: "Не знаю, много работы.", fr: "Je sais pas, j’ai beaucoup de travail.", ok: false, tip: "Même si c’est vrai, avec une grand-mère on rassure et on promet quelque chose : Летом обязательно приеду." }
+      ]},
+      end: { npc: ["Жду тебя, мой хороший! Целую!", "Je t’attends, mon trésor ! Bisous !"], end: true }
+    }
+  },
+  {
+    id: "pharmacie", ctx: "quotidien", level: "A2", title: "À la pharmacie", ru: "В аптеке",
+    who: "Фармацевт", intro: "Tu as mal à la gorge et tu entres dans une pharmacie.",
+    nodes: {
+      start: { npc: ["Здравствуйте! Чем могу помочь?", "Bonjour ! Que puis-je pour vous ?"], choices: [
+        { ru: "Здравствуйте. У меня болит горло. Что вы посоветуете?", fr: "Bonjour. J’ai mal à la gorge. Que me conseillez-vous ?", next: "q" },
+        { ru: "Дайте антибиотик.", fr: "Donnez-moi un antibiotique.", ok: false, tip: "Les antibiotiques demandent une ordonnance, et on décrit d’abord ses symptômes : У меня болит…" }
+      ]},
+      q: { npc: ["Температура есть? Кашель?", "Vous avez de la fièvre ? De la toux ?"], choices: [
+        { ru: "Температуры нет, но есть небольшой кашель.", fr: "Pas de fièvre, mais je tousse un peu.", next: "reco" },
+        { ru: "Да, тридцать девять и сильный кашель.", fr: "Oui, trente-neuf et une forte toux.", next: "doctor" }
+      ]},
+      doctor: { npc: ["С такой температурой лучше вызвать врача. Пока могу дать жаропонижающее.", "Avec une telle fièvre, mieux vaut appeler un médecin. En attendant je peux vous donner un antipyrétique."], choices: [
+        { ru: "Хорошо, дайте, пожалуйста.", fr: "D’accord, donnez-le-moi, s’il vous plaît.", next: "pay" }
+      ]},
+      reco: { npc: ["Возьмите эти таблетки для рассасывания и спрей для горла.", "Prenez ces pastilles à sucer et un spray pour la gorge."], choices: [
+        { ru: "Как их принимать?", fr: "Comment faut-il les prendre ?", next: "dose" }
+      ]},
+      dose: { npc: ["По одной таблетке каждые три часа, не больше восьми в день.", "Une pastille toutes les trois heures, pas plus de huit par jour."], choices: [
+        { ru: "Понятно, спасибо. Сколько с меня?", fr: "Compris, merci. Je vous dois combien ?", next: "pay" }
+      ]},
+      pay: { npc: ["Шестьсот сорок рублей. Выздоравливайте!", "Six cent quarante roubles. Rétablissez-vous bien !"], choices: [
+        { ru: "Вот, пожалуйста. Спасибо большое!", fr: "Voilà. Merci beaucoup !", next: "end" }
+      ]},
+      end: { npc: ["Всего доброго!", "Bonne journée !"], end: true }
+    }
+  },
+  {
+    id: "marche", ctx: "quotidien", level: "A2", title: "Au marché", ru: "На рынке",
+    who: "Продавец", intro: "Au marché, on peut discuter les prix. Achète des tomates sans te faire avoir.",
+    nodes: {
+      start: { npc: ["Подходите, выбирайте! Всё свежее!", "Approchez, choisissez ! Tout est frais !"], choices: [
+        { ru: "Почём помидоры?", fr: "Elles sont à combien, les tomates ?", next: "price" },
+        { ru: "Сколько стоят ваши помидоры, уважаемый господин?", fr: "Combien coûtent vos tomates, cher monsieur ?", ok: false, tip: "« Господин » sonne très étrange au marché. Simplement : Почём… ? ou Сколько стоят… ?" }
+      ]},
+      price: { npc: ["Двести пятьдесят за кило. Сладкие, как мёд!", "Deux cent cinquante le kilo. Sucrées comme du miel !"], choices: [
+        { ru: "Дороговато… Отдадите за двести?", fr: "C’est un peu cher… Vous me les faites à deux cents ?", next: "deal" },
+        { ru: "Хорошо, дайте два кило.", fr: "D’accord, mettez-m’en deux kilos.", next: "weigh" }
+      ]},
+      deal: { npc: ["Ну ладно, для вас — за двести двадцать.", "Bon d’accord, pour vous : deux cent vingt."], choices: [
+        { ru: "Договорились! Два кило, пожалуйста.", fr: "Marché conclu ! Deux kilos, s’il vous plaît.", next: "weigh" }
+      ]},
+      weigh: { npc: ["Вот, два кило с небольшим. Ещё что-нибудь?", "Voilà, deux kilos et un peu plus. Autre chose ?"], choices: [
+        { ru: "Да, пучок укропа, пожалуйста.", fr: "Oui, une botte d’aneth, s’il vous plaît.", next: "end" },
+        { ru: "Нет, спасибо, это всё.", fr: "Non merci, ce sera tout.", next: "end" }
+      ]},
+      end: { npc: ["Держите! Приходите ещё!", "Tenez ! Revenez nous voir !"], end: true }
+    }
+  },
+  {
+    id: "rendezvous", ctx: "proches", level: "B1", title: "Premier rendez-vous", ru: "Первое свидание",
+    who: "Настя", intro: "Ton premier rendez-vous avec Nastia. Sois naturel, chaleureux, curieux.",
+    nodes: {
+      start: { npc: ["Привет! Извини, я немного опоздала.", "Salut ! Désolée, je suis un peu en retard."], choices: [
+        { ru: "Ничего страшного! Ты отлично выглядишь.", fr: "C’est rien ! Tu es superbe.", next: "where" },
+        { ru: "Ты опоздала на пятнадцать минут.", fr: "Tu as quinze minutes de retard.", ok: false, tip: "Exact mais glacial pour un premier rendez-vous. Un petit retard se pardonne avec le sourire : Ничего страшного !" }
+      ]},
+      where: { npc: ["Спасибо! Ну что, куда пойдём?", "Merci ! Bon, on va où ?"], choices: [
+        { ru: "Я знаю уютное кафе рядом. Пойдём?", fr: "Je connais un café sympa à côté. On y va ?", next: "talk" },
+        { ru: "Не знаю, а ты куда хочешь?", fr: "Je sais pas, où tu veux aller ?", next: "corner" }
+      ]},
+      corner: { npc: ["Давай в кафе на углу, там вкусные десерты.", "Allons au café du coin, ils ont de bons desserts."], choices: [
+        { ru: "Отличная идея, пойдём!", fr: "Excellente idée, allons-y !", next: "talk" }
+      ]},
+      talk: { npc: ["Расскажи о себе. Чем ты занимаешься?", "Parle-moi de toi. Qu’est-ce que tu fais dans la vie ?"], choices: [
+        { ru: "Я архитектор, а по выходным играю на гитаре. А ты?", fr: "Je suis architecte, et le week-end je joue de la guitare. Et toi ?", next: "her" },
+        { ru: "Работаю. А ты?", fr: "Je travaille. Et toi ?", ok: false, tip: "Trop laconique : on a l’impression que tu ne veux pas parler. Donne un détail personnel et retourne la question." }
+      ]},
+      her: { npc: ["Я учитель музыки! Вот совпадение.", "Je suis prof de musique ! Quelle coïncidence."], choices: [
+        { ru: "Правда? Тогда ты обязательно должна мне что-нибудь сыграть!", fr: "C’est vrai ? Alors tu dois absolument me jouer quelque chose !", next: "bill" }
+      ]},
+      bill: { npc: ["С удовольствием. Ой, уже поздно… Давай разделим счёт?", "Avec plaisir. Oh, il est déjà tard… On partage l’addition ?"], choices: [
+        { ru: "Не надо, я приглашаю. В следующий раз — ты.", fr: "Laisse, c’est moi qui invite. La prochaine fois, ce sera toi.", next: "end" },
+        { ru: "Давай, как хочешь.", fr: "D’accord, comme tu veux.", next: "end" }
+      ]},
+      end: { npc: ["Договорились! Мне было очень приятно. Напиши мне!", "Ça marche ! J’ai passé un très bon moment. Écris-moi !"], end: true }
+    }
+  },
+  {
+    id: "delai", ctx: "pro", level: "B2", title: "Négocier un délai", ru: "Разговор с начальником",
+    who: "Начальник Виктор Павлович", intro: "Ton rapport ne sera pas prêt à temps. Préviens ton chef avec tact.",
+    nodes: {
+      start: { npc: ["Ну что, отчёт будет готов к пятнице?", "Alors, le rapport sera prêt pour vendredi ?"], choices: [
+        { ru: "Виктор Павлович, боюсь, что к пятнице не успею. Можно перенести на вторник?", fr: "Viktor Pavlovitch, je crains de ne pas avoir fini vendredi. Peut-on décaler à mardi ?", next: "why" },
+        { ru: "Нет, не успею.", fr: "Non, je n’aurai pas le temps.", ok: false, tip: "Trop sec avec un supérieur. Adoucis (Боюсь, что…) et propose tout de suite une solution." }
+      ]},
+      why: { npc: ["А в чём проблема?", "Et quel est le problème ?"], choices: [
+        { ru: "Клиент прислал новые данные только вчера, и их нужно проверить.", fr: "Le client n’a envoyé les nouvelles données qu’hier, et il faut les vérifier.", next: "offer" },
+        { ru: "Ну, так получилось.", fr: "Bah, c’est comme ça.", ok: false, tip: "« Так получилось » ne justifie rien et agace un chef. Donne une raison concrète." }
+      ]},
+      offer: { npc: ["Понятно. Но мне нужны хотя бы предварительные результаты.", "Je vois. Mais il me faut au moins des résultats préliminaires."], choices: [
+        { ru: "Конечно. В пятницу пришлю предварительную версию, а финальную — во вторник.", fr: "Bien sûr. Vendredi j’envoie une version préliminaire, et la finale mardi.", next: "end" }
+      ]},
+      end: { npc: ["Договорились. Спасибо, что предупредили заранее.", "Entendu. Merci d’avoir prévenu à l’avance."], end: true }
+    }
+  },
+  {
     id: "taxi", ctx: "quotidien", level: "A2", title: "En taxi", ru: "В такси",
     who: "Таксист", intro: "Tu prends un taxi depuis la gare jusqu’à ton hôtel.",
     nodes: {

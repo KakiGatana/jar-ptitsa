@@ -1,5 +1,6 @@
 import { $, $$, esc, acc, plain, tr, say, shuffle, pick, toast, sparks, stressify, initVoices, ruVoices, setVoice, canSpeak, hasRuVoice } from "./util.js";
-import { S, save, addXP, addCards, hasCard, dueCards, grade, today, addDays, liveStreak, goal, todayXP, exportData, importData, resetAll, MAX_IMPORT_BYTES } from "./store.js";
+import { S, save, addXP, addCards, hasCard, dueCards, grade, today, addDays, liveStreak, goal, todayXP, exportData, resetAll, MAX_IMPORT_BYTES, readBackup, mergeWith, replaceWith, summarize } from "./store.js";
+import { statsPage } from "./stats.js";
 import { runQuiz, buildLessonQuiz, ICON_SOUND } from "./quiz.js";
 import { logoSVG } from "./logo.js";
 import { LEVELS, HONEST_NOTE } from "./data/curriculum.js";
@@ -11,10 +12,11 @@ import { CONVERSATIONS } from "./data/conversations.js";
 import { PHRASES } from "./data/phrases.js";
 import { LESSONS_B2, LESSONS_C1 } from "./data/lessons-c.js";
 import { CULTURE } from "./data/culture.js";
+import { LESSONS_D } from "./data/lessons-d.js";
 
 // Leçons triées par niveau (l’ordre des fichiers ne compte pas).
 const LV_ORDER = LEVELS.map((l) => l.id);
-const LESSONS = [...LESSONS_A, ...LESSONS_B, ...LESSONS_B2, ...LESSONS_C1]
+const LESSONS = [...LESSONS_A, ...LESSONS_B, ...LESSONS_B2, ...LESSONS_C1, ...LESSONS_D]
   .map((l, i) => [l, i]).sort((a, b) => LV_ORDER.indexOf(a[0].level) - LV_ORDER.indexOf(b[0].level) || a[1] - b[1]).map(([l]) => l);
 const byId = Object.fromEntries(LESSONS.map((l) => [l.id, l]));
 const ALL_VOCAB = LESSONS.flatMap((l) => l.vocab);
@@ -31,6 +33,7 @@ const I = {
   map: '<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 4v14M15 6v14" stroke="currentColor" stroke-width="2"/>',
   user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6z"/>',
   abc: '<text x="12" y="17" text-anchor="middle" font-size="15" font-weight="700" font-family="serif">Ж</text>',
+  chart: '<path d="M4 19h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M5 15l4-5 4 3 6-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
   star: '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>',
   flame: '<path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-3-1-6 1-9z"/>'
 };
@@ -77,7 +80,7 @@ const routes = [
   [/^$/, home], [/^parcours$/, parcours], [/^lecon\/(.+)$/, lesson], [/^revision$/, review],
   [/^pratique$/, practice], [/^conversation\/(.+)$/, conversation], [/^phrases(?:\/([a-z]+))?$/, phrases], [/^culture(?:\/([a-z-]+))?$/, culture],
   [/^grammaire$/, grammarList], [/^grammaire\/(.+)$/, grammarArticle], [/^alphabet$/, alphabet],
-  [/^programme$/, programme], [/^profil$/, profile]
+  [/^programme$/, programme], [/^profil$/, profile], [/^sauvegarde$/, backup], [/^stats$/, () => statsPage({ LESSONS, LEVELS, after, levelPct })]
 ];
 function route() {
   const h = decodeURIComponent(location.hash.replace(/^#\/?/, ""));
@@ -90,7 +93,7 @@ function route() {
   stressify(view);
   afterRender.splice(0).forEach((f) => f());
   const top = h.split("/")[0];
-  const navKey = { lecon: "parcours", conversation: "pratique", phrases: "pratique" }[top] ?? top;
+  const navKey = { lecon: "parcours", conversation: "pratique", phrases: "pratique", sauvegarde: "profil", stats: "profil" }[top] ?? top;
   $$("[data-nav]").forEach((a) => a.classList.toggle("on", a.dataset.nav === navKey));
   scrollTo(0, 0);
   refreshChrome();
@@ -118,7 +121,10 @@ function greeting() {
 }
 
 // ───────────────────────── Accueil ─────────────────────────
+const weekXP = () => { let t = 0; for (let k = 0; k < 7; k++) t += S.days[addDays(today(), -k)] || 0; return t; };
+
 function home() {
+  after(() => { $("[data-backup-now]")?.addEventListener("click", () => { downloadBackup(); route(); }); });
   const [g, gfr] = greeting();
   const nl = nextLesson();
   const due = dueCards().length;
@@ -147,8 +153,11 @@ function home() {
     <a class="tile" href="#/revision">${icon("cards")}<b>${due}</b><span>carte${due > 1 ? "s" : ""} à réviser</span></a>
     <a class="tile" href="#/conversation/${conv.id}">${icon("chat")}<b>Parler</b><span>${esc(conv.title)}</span></a>
     <a class="tile" href="#/alphabet">${icon("abc")}<b>Азбука</b><span>l’alphabet</span></a>
-    <a class="tile" href="#/grammaire">${icon("book")}<b>Guides</b><span>${GRAMMAR.length} tutos</span></a>
+    <a class="tile" href="#/stats">${icon("chart")}<b>${weekXP()} XP</b><span>cette semaine · courbes</span></a>
   </div>
+
+  ${needsBackup() ? `<div class="card remind"><div><b>Pense à sauvegarder ta progression</b><p class="muted">${backupAge()} Une sauvegarde te protège si tu changes d’appareil ou vides ton navigateur.</p></div>
+    <div class="row"><button class="btn gold sm" data-backup-now>Sauvegarder</button><a class="btn ghost sm" href="#/sauvegarde">Options</a></div></div>` : ""}
 
   <section class="card wod">
     <p class="eyebrow">Le mot du jour</p>
@@ -482,6 +491,69 @@ function programme() {
   <tr><td>Leçon</td><td>Révisions + série</td><td>Conversation</td><td>Leçon</td><td>Révisions + guide</td><td>Conversation</td><td>Film ou lecture</td></tr></table></section>`;
 }
 
+// ───────────────────────── Sauvegarde ─────────────────────────
+const daysSince = (iso) => Math.round((new Date(today() + "T12:00") - new Date(iso + "T12:00")) / 864e5);
+function backupAge() {
+  if (!S.lastBackup) return "Tu n’as encore jamais fait de sauvegarde.";
+  const n = daysSince(S.lastBackup);
+  return n === 0 ? "Dernière sauvegarde : aujourd’hui." : `Dernière sauvegarde : il y a ${n} jour${n > 1 ? "s" : ""}.`;
+}
+// Rappel discret si la progression n’a pas été sauvegardée depuis 14 jours.
+const needsBackup = () => S.xp >= 50 && (!S.lastBackup || daysSince(S.lastBackup) >= 14);
+
+function downloadBackup() {
+  const url = URL.createObjectURL(new Blob([exportData()], { type: "application/json" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = `jar-ptitsa-${today()}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast("Sauvegarde téléchargée");
+}
+
+function backup() {
+  const cur = summarize(S);
+  const row = (s) => `<td>${s.xp}</td><td>${s.lessons}</td><td>${s.cards}</td><td>${s.days}</td>`;
+  after(() => {
+    $("#bexp").onclick = () => { downloadBackup(); route(); };
+    const zone = $("#bdrop"), input = $("#bfile"), pre = $("#bpreview");
+    const handle = async (f) => {
+      if (!f) return;
+      if (f.size > MAX_IMPORT_BYTES) return toast("Fichier trop gros (5 Mo max)");
+      let res;
+      try { res = readBackup(await f.text()); } catch (err) { return toast("Ce fichier n’est pas une sauvegarde Жар-птица valide"); }
+      const when = res.exportedAt ? new Date(res.exportedAt).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" }) : "date inconnue";
+      pre.hidden = false;
+      pre.innerHTML = `<h3>Sauvegarde du ${esc(when)}</h3>
+        <table class="gram"><tr><th></th><th>XP</th><th>Leçons</th><th>Cartes</th><th>Jours actifs</th></tr>
+        <tr><td><b>Cet appareil</b></td>${row(cur)}</tr><tr><td><b>Fichier</b></td>${row(res.summary)}</tr></table>
+        <p class="muted"><b>Fusionner</b> garde le meilleur des deux (idéal pour réunir téléphone et ordinateur). <b>Remplacer</b> efface la progression de cet appareil et met celle du fichier à la place.</p>
+        <div class="row"><button class="btn gold" data-merge>Fusionner</button><button class="btn ghost" data-replace>Remplacer</button><button class="btn ghost" data-cancel>Annuler</button></div>`;
+      pre.scrollIntoView({ behavior: "smooth", block: "center" });
+      const done = (msg) => { window.__rate = S.settings.rate; setVoice(S.settings.voice); applyTheme(); toast(msg); route(); };
+      $("[data-merge]", pre).onclick = () => { mergeWith(res.data); done("Progressions fusionnées"); };
+      $("[data-replace]", pre).onclick = () => { if (confirm("Remplacer toute la progression de cet appareil par celle du fichier ?")) { replaceWith(res.data); done("Progression restaurée"); } };
+      $("[data-cancel]", pre).onclick = () => { pre.hidden = true; };
+    };
+    input.onchange = (e) => { handle(e.target.files[0]); e.target.value = ""; };
+    zone.ondragover = (e) => { e.preventDefault(); zone.classList.add("over"); };
+    zone.ondragleave = () => zone.classList.remove("over");
+    zone.ondrop = (e) => { e.preventDefault(); zone.classList.remove("over"); handle(e.dataTransfer.files[0]); };
+  });
+  return `<nav class="crumbs"><a href="#/profil">Profil</a> › Sauvegarde</nav>
+  <header class="page-h"><p class="eyebrow">Sauvegarde</p><h1>Ta progression, en sécurité</h1><p class="muted">Tout est stocké sur cet appareil, sans compte. Si tu vides le navigateur ou changes de téléphone, seule une sauvegarde te permet de tout retrouver.</p></header>
+  <section class="card backup">
+    <div><h3>1. Sauvegarder</h3><p>${backupAge()}</p><p class="muted">Un petit fichier <code>.json</code> est téléchargé : XP, leçons, cartes, série et réglages. Range-le dans ton cloud ou envoie-le-toi par e-mail.</p></div>
+    <button class="btn gold" id="bexp">Télécharger ma sauvegarde</button>
+  </section>
+  <section class="card">
+    <h3>2. Restaurer ou fusionner</h3>
+    <label class="drop" id="bdrop"><input type="file" id="bfile" accept="application/json,.json" hidden>
+      <span class="drop-ic">⇪</span><b>Choisir un fichier de sauvegarde</b><small class="muted">ou le glisser ici</small></label>
+    <div id="bpreview" class="bpreview" hidden></div>
+  </section>
+  <section class="card tip"><h3>Passer du téléphone à l’ordinateur</h3><p>Sauvegarde sur le premier appareil, ouvre le fichier sur le second et choisis <b>Fusionner</b> : tu gardes la meilleure progression des deux, carte par carte.</p></section>`;
+}
+
 // ───────────────────────── Profil ─────────────────────────
 function profile() {
   const days = []; for (let k = 83; k >= 0; k--) days.push(addDays(today(), -k));
@@ -497,14 +569,6 @@ function profile() {
     $("#pvoice")?.addEventListener("change", (e) => { st.voice = e.target.value; setVoice(st.voice); save(); say("Привет! Как дела?"); });
     $("#ptest").onclick = () => say("Здравствуйте! Меня зовут Жар-птица.");
     $("#preplay").onclick = () => playIntro(true);
-    $("#pexp").onclick = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([exportData()], { type: "application/json" })); a.download = `jar-ptitsa-${today()}.json`; a.click(); };
-    $("#pimp").onchange = async (e) => {
-      const f = e.target.files[0]; e.target.value = "";
-      if (!f) return;
-      if (f.size > MAX_IMPORT_BYTES) return toast("Fichier trop gros (5 Mo max)");
-      try { importData(await f.text()); window.__rate = S.settings.rate; setVoice(S.settings.voice); toast("Progression importée"); applyTheme(); route(); }
-      catch (err) { toast("Fichier invalide"); }
-    };
     $("#preset").onclick = () => { if (confirm("Effacer toute ta progression ? Cette action est définitive.")) { resetAll(); applyTheme(); route(); toast("Progression effacée"); } };
   });
   const vs = ruVoices();
@@ -515,7 +579,7 @@ function profile() {
     <div class="tile">✓<b>${Object.keys(S.done).length}</b><span>leçons sur ${LESSONS.length}</span></div>
     <div class="tile">❖<b>${Object.keys(S.srs).length}</b><span>cartes</span></div>
   </div>
-  <section class="card"><h3>12 dernières semaines</h3><div class="heat">${days.map((d) => `<i title="${d} : ${S.days[d] || 0} XP" style="--v:${(S.days[d] || 0) / maxD}"></i>`).join("")}</div></section>
+  <section class="card"><div class="sec-row"><h3>12 dernières semaines</h3><a class="btn ghost sm" href="#/stats">Voir mes courbes →</a></div><div class="heat">${days.map((d) => `<i title="${d} : ${S.days[d] || 0} XP" style="--v:${(S.days[d] || 0) / maxD}"></i>`).join("")}</div></section>
   <section class="card settings">
     <h3>Réglages</h3>
     <label>Prénom<input id="pname" value="${esc(S.name)}" placeholder="Comment t’appeler ?"></label>
@@ -528,8 +592,8 @@ function profile() {
       `<p class="warn">${canSpeak() ? "Aucune voix russe détectée. Sous Windows : Paramètres › Heure et langue › Voix › ajouter « Russe ». Chrome et Edge en proposent aussi en ligne." : "Ton navigateur ne gère pas la synthèse vocale."}</p>`}
     <div class="row"><button class="btn ghost" id="ptest">Tester la voix</button><button class="btn ghost" id="preplay">Revoir l’intro</button></div>
   </section>
-  <section class="card settings"><h3>Mes données</h3><p class="muted">Ta progression reste sur cet appareil. Exporte-la pour la sauvegarder ou la transférer.</p>
-    <div class="row"><button class="btn ghost" id="pexp">Exporter</button><label class="btn ghost">Importer<input type="file" id="pimp" accept="application/json" hidden></label><button class="btn red" id="preset">Tout effacer</button></div></section>
+  <section class="card settings"><h3>Mes données</h3><p class="muted">Ta progression reste sur cet appareil. ${backupAge()}</p>
+    <div class="row"><a class="btn gold" href="#/sauvegarde">Sauvegarder ou restaurer</a><button class="btn red" id="preset">Tout effacer</button></div></section>
   <p class="muted center small">Жар-птица · l’Oiseau de feu · fait avec ♥ pour apprendre le russe</p>`;
 }
 
@@ -574,4 +638,35 @@ initVoices(S.settings.voice);
 shell();
 route();
 playIntro();
-if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+setupUpdates();
+
+// ───────────────────────── Mises à jour (bandeau « Actualiser ») ─────────────────────────
+function setupUpdates() {
+  if (!("serviceWorker" in navigator) || !(location.protocol === "https:" || location.hostname === "localhost")) return;
+  const bar = $("#update");
+  let wantReload = false;
+  // On ne recharge que si l’utilisateur a cliqué sur « Actualiser » (pas lors de la première installation).
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (wantReload) location.reload(); });
+  const offer = (worker) => {
+    if (!worker || !navigator.serviceWorker.controller) return; // première visite : rien à proposer
+    bar.hidden = false;
+    requestAnimationFrame(() => bar.classList.add("on"));
+    $("[data-update]", bar).onclick = () => {
+      wantReload = true;
+      $("[data-update]", bar).textContent = "Mise à jour…";
+      worker.postMessage("skipWaiting");
+    };
+    $("[data-update-close]", bar).onclick = () => { bar.classList.remove("on"); setTimeout(() => (bar.hidden = true), 300); };
+  };
+  navigator.serviceWorker.register("sw.js").then((reg) => {
+    if (reg.waiting) offer(reg.waiting);
+    reg.addEventListener("updatefound", () => {
+      const nw = reg.installing;
+      nw?.addEventListener("statechange", () => { if (nw.state === "installed") offer(nw); });
+    });
+    // Vérifie s’il existe une nouvelle version au retour sur l’appli et toutes les 30 minutes.
+    const check = () => reg.update().catch(() => {});
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") check(); });
+    setInterval(check, 30 * 60 * 1000);
+  }).catch(() => {});
+}
