@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Жар-птица · Apprendre le russe</title>
+  <meta name="description" content="Jar-Ptitsa, l’Oiseau de feu : un parcours complet sur plusieurs années pour apprendre le russe, de l’alphabet au bilinguisme.">
+  <meta name="theme-color" content="#1a0c0f">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Manrope:wght@400;500;600;700&family=Ruslan+Display&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="intro" class="intro" aria-hidden="true">
+    <canvas></canvas>
+    <div class="intro-glow"></div>
+    <div class="intro-c">
+      <div class="intro-logo"></div>
+      <h1 class="intro-title"></h1>
+      <p class="intro-sub">L’Oiseau de feu · du premier mot au bilinguisme</p>
+      <p class="intro-skip">Touche pour entrer</p>
+    </div>
+  </div>
+
+  <div class="app">
+    <header class="top">
+      <a href="#/" id="brand" class="brand" aria-label="Accueil"></a>
+      <div class="top-r">
+        <span id="streak" class="streak" title="Jours de suite"></span>
+        <a href="#/programme" class="icon-btn top-link" aria-label="Programme"><svg viewBox="0 0 24 24" class="ic"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></a>
+        <a href="#/profil" class="icon-btn top-link" aria-label="Profil"><svg viewBox="0 0 24 24" class="ic" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6z"/></svg></a>
+      </div>
+    </header>
+    <nav id="side" class="side" aria-label="Navigation"></nav>
+    <main id="view" class="view"></main>
+    <nav id="tabs" class="tabs" aria-label="Navigation mobile"></nav>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

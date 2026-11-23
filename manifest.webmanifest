@@ -1,0 +1,15 @@
+{
+  "name": "Жар-птица · Apprendre le russe",
+  "short_name": "Жар-птица",
+  "description": "L’Oiseau de feu : un parcours sur plusieurs années pour apprendre le russe, de l’alphabet au bilinguisme.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#140a0c",
+  "theme_color": "#1a0c0f",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

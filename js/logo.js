@@ -1,0 +1,22 @@
+// Logo : la lettre Ж dessinée comme un oiseau de feu, sous une arche en kokochnik.
+export function logoSVG(id = "lg") {
+  return `<svg class="logo" viewBox="0 0 120 120" role="img" aria-label="Жар-птица">
+  <defs>
+    <linearGradient id="${id}g" gradientUnits="userSpaceOnUse" x1="0" y1="6" x2="0" y2="112"><stop offset="0" stop-color="#f8dc8f"/><stop offset=".55" stop-color="#d9a441"/><stop offset="1" stop-color="#9c5a1a"/></linearGradient>
+    <linearGradient id="${id}f" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#c2332b"/><stop offset=".6" stop-color="#ee7a2c"/><stop offset="1" stop-color="#ffd36a"/></linearGradient>
+    <radialGradient id="${id}r" cx=".5" cy=".55" r=".5"><stop offset="0" stop-color="#7a1c1a"/><stop offset="1" stop-color="#2a0c0e"/></radialGradient>
+  </defs>
+  <path class="l-bg" d="M60 6C66 18 92 26 98 52C100 60 100 64 100 70L100 112L20 112L20 70C20 64 20 60 22 52C28 26 54 18 60 6Z" fill="url(#${id}r)"/>
+  <path class="l-arch" pathLength="1" d="M60 6C66 18 92 26 98 52C100 60 100 64 100 70L100 112L20 112L20 70C20 64 20 60 22 52C28 26 54 18 60 6Z" fill="none" stroke="url(#${id}g)" stroke-width="3"/>
+  <path class="l-arch2" pathLength="1" d="M60 15C65 25 86 32 91 53C92 59 92 64 92 70L92 104L28 104L28 70C28 64 28 59 29 53C34 32 55 25 60 15Z" fill="none" stroke="url(#${id}g)" stroke-width="1.1" opacity=".55"/>
+  <g class="l-zh" fill="none" stroke="url(#${id}g)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path pathLength="1" d="M60 46L60 96"/>
+    <path pathLength="1" d="M60 70C52 65 45 57 41 46C39 40 35 37 30 39"/>
+    <path pathLength="1" d="M60 70C68 65 75 57 79 46C81 40 85 37 90 39"/>
+    <path pathLength="1" d="M60 70C52 76 45 85 39 96"/>
+    <path pathLength="1" d="M60 70C68 76 75 85 81 96"/>
+  </g>
+  <g class="l-eyes" fill="url(#${id}f)"><circle cx="29" cy="40" r="3.4"/><circle cx="91" cy="40" r="3.4"/><circle cx="38" cy="98" r="3"/><circle cx="82" cy="98" r="3"/></g>
+  <path class="l-flame" d="M60 45C53 39 55 31 60 22C61 29 67 32 65 38C64 41 62 43 60 45Z" fill="url(#${id}f)"/>
+</svg>`;
+}
